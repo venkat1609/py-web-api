@@ -12,12 +12,11 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from motor.motor_asyncio import AsyncIOMotorClient
 from urllib.parse import quote_plus
+import os
 
-username = "admin"
-password = quote_plus("Venkat@1995.")  # Encodes special characters like @ and .
-uri = f"mongodb://{username}:{password}@cluster0.feoiggt.mongodb.net/?retryWrites=true&w=majority"
-
-client = AsyncIOMotorClient(uri)
+MONGO_URI = os.getenv("MONGODB_URI")
+client = AsyncIOMotorClient(MONGO_URI)
+print("Connected to MongoDB", MONGO_URI)
 
 db = client["finance_app"]
 users_collection = db["users"]
