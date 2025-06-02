@@ -10,6 +10,17 @@ from passlib.context import CryptContext
 from typing import Optional
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
+from motor.motor_asyncio import AsyncIOMotorClient
+from urllib.parse import quote_plus
+
+username = "admin"
+password = quote_plus("Venkat@1995.")  # Encodes special characters like @ and .
+uri = f"mongodb://{username}:{password}@cluster0.feoiggt.mongodb.net/?retryWrites=true&w=majority"
+
+client = AsyncIOMotorClient(uri)
+
+db = client["finance_app"]
+users_collection = db["users"]
 
 app = FastAPI()
 security = HTTPBasic()
@@ -33,9 +44,6 @@ SECRET_KEY = "your-secret-key"  # Use environment variable in production
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-# In-memory user store
-fake_users_db = {}
-
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -58,7 +66,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
 
 # --- Get current user from JWT ---
-def get_current_user(
+async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
 ):
     token = credentials.credentials  # Correct way to get the token from Bearer scheme
@@ -70,37 +78,47 @@ def get_current_user(
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username = payload.get("sub")
-        if not username or username not in fake_users_db:
+
+        user = await users_collection.find_one({"username": username})
+        if not user:
             raise credentials_exception
-        return fake_users_db[username]
+        return user
     except JWTError:
         raise credentials_exception
 
 
 # --- Routes ---
 @app.post("/register")
-def register(user: User):
-    if user.username in fake_users_db:
+async def register(user: User):
+    existing_user = await users_collection.find_one({"username": user.username})
+    if existing_user:
         raise HTTPException(status_code=400, detail="Username already exists")
 
     hashed = hash_password(user.password)
-    fake_users_db[user.username] = {
+    user_data = {
         "username": user.username,
         "email": user.email,
         "hashed_password": hashed,
         "age": user.age,
     }
+
+    await users_collection.insert_one(user_data)
     return {"message": "User registered successfully"}
 
 
 @app.get("/users")
-def get_all_users():
-    return fake_users_db
+async def get_all_users():
+    users = []
+    async for user in users_collection.find(
+        {}, {"_id": 0, "hashed_password": 0}
+    ):  # hide sensitive info
+        users.append(user)
+    return users
 
 
 @app.post("/login", response_model=Token)
-def login(credentials: HTTPBasicCredentials = Depends()):
-    user = fake_users_db.get(credentials.username)
+async def login(credentials: HTTPBasicCredentials = Depends()):
+    user = await users_collection.find_one({"username": credentials.username})
     if not user or not verify_password(credentials.password, user["hashed_password"]):
         raise HTTPException(status_code=400, detail="Invalid credentials")
     access_token = create_access_token(data={"sub": user["username"]})
@@ -108,5 +126,11 @@ def login(credentials: HTTPBasicCredentials = Depends()):
 
 
 @app.get("/me")
-def read_me(current_user: dict = Depends(get_current_user)):
-    return {"user": current_user}
+async def read_me(current_user: dict = Depends(get_current_user)):
+    return {
+        "user": {
+            "username": current_user["username"],
+            "email": current_user["email"],
+            "age": current_user["age"],
+        }
+    }
