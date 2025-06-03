@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from jose import jwt, JWTError
 from fastapi import HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from app.db.mongo import users_collection
+from app.db.mongo import db
 
 import os
 from dotenv import load_dotenv
@@ -14,6 +14,8 @@ ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
 
 bearer_scheme = HTTPBearer()
+
+collection = db["users"]
 
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
@@ -34,7 +36,7 @@ async def get_current_user(
         username = payload.get("sub")
         if username is None:
             raise ValueError
-        user = await users_collection.find_one({"username": username})
+        user = await collection.find_one({"username": username})
         if not user:
             raise ValueError
         return user
