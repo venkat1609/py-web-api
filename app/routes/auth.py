@@ -37,7 +37,7 @@ async def register(user: User):
 @router.get("/users")
 async def get_all_users():
     users = []
-    async for user in collection.find({}, {"_id": 0, "hashed_password": 0}):
+    async for user in collection.find({}, { "hashed_password": 0}):
         users.append(user)
     return users
 

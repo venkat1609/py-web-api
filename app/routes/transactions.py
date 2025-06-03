@@ -14,6 +14,7 @@ collection = db["transactions"]
 async def create_transaction(tx: TransactionCreate):
     now = datetime.utcnow()
     data = tx.dict()
+    data["user_id"] = ObjectId(tx.user_id)
     data["createdAt"] = now
     data["updatedAt"] = now
     result = await collection.insert_one(data)

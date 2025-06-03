@@ -9,6 +9,7 @@ class TransactionBase(BaseModel):
     type: str  # income, expense, debt, investment
     date: datetime
     notes: Optional[str] = None
+    user_id: str  # foreign key reference to users._id
 
 
 class TransactionCreate(TransactionBase):
@@ -21,6 +22,7 @@ class TransactionUpdate(BaseModel):
     type: Optional[str] = None
     date: Optional[datetime] = None
     notes: Optional[str] = None
+    user_id: Optional[str] = None  # Optional so partial updates work
 
 
 class TransactionOut(TransactionBase):
