@@ -124,8 +124,8 @@ async def login(credentials: HTTPBasicCredentials = Depends()):
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@app.get("/me")
-async def read_me(current_user: dict = Depends(get_current_user)):
+@app.get("/current_user")
+async def current_user(current_user: dict = Depends(get_current_user)):
     return {
         "user": {
             "username": current_user["username"],
