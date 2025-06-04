@@ -5,7 +5,7 @@ from bson import ObjectId
 from datetime import datetime
 from typing import List
 
-router = APIRouter(prefix="/transactions", tags=["Transactions"])
+router = APIRouter()
 
 collection = db["transactions"]
 
