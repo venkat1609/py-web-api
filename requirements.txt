@@ -7,3 +7,4 @@ python-multipart
 pydantic
 python-dotenv
 motor
+pydantic[email]
