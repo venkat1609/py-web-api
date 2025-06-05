@@ -1,62 +1,122 @@
-from fastapi import APIRouter, HTTPException, status
-from app.models.transaction import TransactionCreate, TransactionUpdate, TransactionOut
-from app.db.mongo import db, fix_id
+from fastapi import APIRouter, HTTPException, status, Depends, Body, Path
+from app.models.transaction import (
+    TransactionCreate,
+    TransactionUpdate,
+    TransactionOut,
+)
+from app.db.mongo import db
 from bson import ObjectId
 from datetime import datetime
-from typing import List
+from typing import List, Optional, Dict
+from app.utils.helpers import fix_id
+from app.routes.auth import get_current_user  # 👈 New import
+from app.schemas.transaction import TransactionRequest
 
 router = APIRouter()
-
 collection = db["transactions"]
 
 
 @router.post("/", response_model=TransactionOut, status_code=status.HTTP_201_CREATED)
-async def create_transaction(tx: TransactionCreate):
+async def create_transaction(
+    tx: TransactionCreate, current_user: str = Depends(get_current_user)
+):
+
     now = datetime.utcnow()
     data = tx.dict()
-    data["user_id"] = ObjectId(tx.user_id)
+    data["user_id"] = current_user["_id"]
     data["createdAt"] = now
     data["updatedAt"] = now
+
+    print(data)
     result = await collection.insert_one(data)
     created = await collection.find_one({"_id": result.inserted_id})
     return fix_id(created)
 
 
-@router.get("/", response_model=List[TransactionOut])
-async def list_transactions():
+@router.get("/")
+async def list_transactions(current_user: str = Depends(get_current_user)):
     cursor = collection.find().sort("date", -1)
+
     results = []
     async for doc in cursor:
+        print(doc)
         results.append(fix_id(doc))
     return results
 
 
-@router.get("/{tx_id}", response_model=TransactionOut)
-async def get_transaction(tx_id: str):
+@router.get("/{tx_id}")
+async def get_transaction(tx_id: str, current_user: str = Depends(get_current_user)):
     doc = await collection.find_one({"_id": ObjectId(tx_id)})
     if not doc:
         raise HTTPException(status_code=404, detail="Transaction not found")
     return fix_id(doc)
 
 
-@router.put("/{tx_id}", response_model=TransactionOut)
-async def update_transaction(tx_id: str, update: TransactionUpdate):
-    update_data = {k: v for k, v in update.dict().items() if v is not None}
-    update_data["updatedAt"] = datetime.utcnow()
+@router.post("/filter", response_model=List[TransactionOut])
+async def filter_transactions(
+    filters: TransactionRequest, current_user: str = Depends(get_current_user)
+):
+    query = {}
 
-    result = await collection.update_one(
-        {"_id": ObjectId(tx_id)}, {"$set": update_data}
-    )
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Transaction not found")
+    # Filter by transaction ID (optional)
+    if "id" in filters:
+        try:
+            query["_id"] = ObjectId(filters["id"])
+        except:
+            raise HTTPException(status_code=400, detail="Invalid txn_id")
 
-    doc = await collection.find_one({"_id": ObjectId(tx_id)})
-    return fix_id(doc)
+    # Filter by different user_id (admin usage maybe)
+    if "user_id" in filters:
+        try:
+            query["user_id"] = ObjectId(filters["user_id"])
+        except:
+            raise HTTPException(status_code=400, detail="Invalid user_id")
+
+    cursor = collection.find(fix_id(query)).sort("date", -1)
+    results = [fix_id(doc) async for doc in cursor]
+    return results
 
 
-@router.delete("/{tx_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_transaction(tx_id: str):
-    result = await collection.delete_one({"_id": ObjectId(tx_id)})
+@router.put("/{txn_id}")
+async def update_transaction(
+    txn_id: str = Path(...),
+    payload: TransactionUpdate = Body(...),
+    current_user: dict = Depends(get_current_user),
+):
+    print(txn_id, payload, current_user)
+    try:
+        txn_object_id = ObjectId(txn_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid transaction ID")
+
+    query = {"_id": txn_object_id, "user_id": ObjectId(current_user["_id"])}
+    update = {"$set": {k: v for k, v in payload.dict().items() if v is not None}}
+
+    result = await collection.update_one(query, update)
+
+    if result.modified_count == 0:
+        raise HTTPException(
+            status_code=404, detail="Transaction not found or no changes made"
+        )
+
+    updated = await collection.find_one({"_id": txn_object_id})
+    return fix_id(updated)
+
+
+@router.delete("/{txn_id}")
+async def delete_transaction(
+    txn_id: str = Path(...),
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        txn_object_id = ObjectId(txn_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid transaction ID")
+
+    query = {"_id": txn_object_id, "user_id": ObjectId(current_user["_id"])}
+    result = await collection.delete_one(query)
+
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Transaction not found")
-    return
+
+    return {"message": "Transaction deleted successfully"}
