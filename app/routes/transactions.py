@@ -27,7 +27,6 @@ async def create_transaction(
     data["createdAt"] = now
     data["updatedAt"] = now
 
-    print(data)
     result = await collection.insert_one(data)
     created = await collection.find_one({"_id": result.inserted_id})
     return fix_id(created)
@@ -39,7 +38,6 @@ async def list_transactions(current_user: str = Depends(get_current_user)):
 
     results = []
     async for doc in cursor:
-        print(doc)
         results.append(fix_id(doc))
     return results
 
@@ -83,7 +81,6 @@ async def update_transaction(
     payload: TransactionUpdate = Body(...),
     current_user: dict = Depends(get_current_user),
 ):
-    print(txn_id, payload, current_user)
     try:
         txn_object_id = ObjectId(txn_id)
     except:
