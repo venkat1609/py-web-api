@@ -8,6 +8,7 @@ app = FastAPI()
 # Allow CORS for your frontend domain
 origins = [
     "http://localhost:3000",  # React dev server
+    "https://gowisely.netlify.app"
 ]
 
 app.add_middleware(
