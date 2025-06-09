@@ -39,7 +39,19 @@ async def register(user: User):
     }
 
     await collection.insert_one(user_data)
-    return {"message": "User registered successfully"}
+
+    access_token = create_access_token(data={"sub": user_data["username"]})
+
+    user = {
+        "id": str(user_data["_id"]),
+        "username": user_data["username"],
+        "email": user_data["email"],
+        "age": user_data["age"],
+        "access_token": access_token,
+        "token_type": "bearer",
+    }
+
+    return user
 
 
 def mongo_to_user(user):
@@ -81,7 +93,17 @@ async def login(credentials: LoginRequest):
     if not user or not verify_password(credentials.password, user["hashed_password"]):
         raise HTTPException(status_code=400, detail="Invalid credentials")
     access_token = create_access_token(data={"sub": user["username"]})
-    return {"access_token": access_token, "token_type": "bearer"}
+
+    user_data = {
+        "id": str(user["_id"]),
+        "username": user["username"],
+        "email": user["email"],
+        "age": user["age"],
+        "access_token": access_token,
+        "token_type": "bearer",
+    }
+
+    return user_data
 
 
 @router.get("/current_user", response_model=UserOut)

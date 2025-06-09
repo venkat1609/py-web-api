@@ -4,12 +4,8 @@ from app.routes import auth, transactions, categories
 
 app = FastAPI()
 
-
 # Allow CORS for your frontend domain
-origins = [
-    "http://localhost:3000",  # React dev server
-    "https://gowisely.netlify.app"
-]
+origins = ["http://localhost:3000", "https://gowisely.netlify.app"]  # React dev server
 
 app.add_middleware(
     CORSMiddleware,
