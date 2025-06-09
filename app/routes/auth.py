@@ -87,7 +87,7 @@ async def get_users():
     return [UserResponse(**user.dict(exclude={"password"})) for user in users]
 
 
-@router.post("/login", response_model=Token)
+@router.post("/login")
 async def login(credentials: LoginRequest):
     user = await collection.find_one({"username": credentials.username})
     if not user or not verify_password(credentials.password, user["hashed_password"]):
