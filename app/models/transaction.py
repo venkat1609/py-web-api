@@ -6,7 +6,7 @@ from datetime import datetime
 class TransactionBase(BaseModel):
     title: str
     amount: float
-    type: str  # income, expense, debt, investment
+    type: float  # income, expense, debt, investment
     date: datetime
     notes: Optional[str] = None
     user_id: str  # foreign key reference to users._id
@@ -19,7 +19,7 @@ class TransactionCreate(TransactionBase):
 class TransactionUpdate(BaseModel):
     title: Optional[str] = None
     amount: Optional[float] = None
-    type: Optional[str] = None
+    type: Optional[float] = None
     date: Optional[datetime] = None
     notes: Optional[str] = None
     user_id: Optional[str] = None  # Optional so partial updates work

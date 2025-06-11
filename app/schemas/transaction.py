@@ -6,7 +6,7 @@ from datetime import datetime
 class TransactionBase(BaseModel):
     title: str
     amount: float
-    type: str  # income | expense | debt | investment
+    type: float  # income | expense | debt | investment
     date: datetime
     notes: Optional[str] = None
 
@@ -19,6 +19,7 @@ class TransactionRequest(BaseModel):
 class TransactionUpdate(BaseModel):
     title: Optional[str]
     amount: Optional[float]
+    type: Optional[float]  # income | expense | debt | investment
     category: Optional[str]
     date: Optional[str]
     notes: Optional[str]
