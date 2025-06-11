@@ -10,6 +10,7 @@ class TransactionBase(BaseModel):
     date: datetime
     notes: Optional[str] = None
     user_id: str  # foreign key reference to users._id
+    category: float  # foreign key reference to categories._id
 
 
 class TransactionCreate(TransactionBase):
@@ -23,6 +24,7 @@ class TransactionUpdate(BaseModel):
     date: Optional[datetime] = None
     notes: Optional[str] = None
     user_id: Optional[str] = None  # Optional so partial updates work
+    category: Optional[float] = None  # Optional so partial updates work
 
 
 class TransactionOut(TransactionBase):
