@@ -2,13 +2,13 @@ from fastapi import APIRouter, HTTPException, status, Depends, Body, Path
 from app.models.transaction import (
     TransactionCreate,
     TransactionUpdate,
-    TransactionOut,
-    TransactionRequest
+    TransactionResponse,
+    TransactionRequest,
 )
 from app.db.mongo import db
 from bson import ObjectId
 from datetime import datetime
-from typing import List, Optional, Dict
+from typing import List
 from app.utils.helpers import fix_id
 from app.routes.auth import get_current_user  # 👈 New import
 
@@ -16,7 +16,9 @@ router = APIRouter()
 collection = db["transactions"]
 
 
-@router.post("/", response_model=TransactionOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_transaction(
     tx: TransactionCreate, current_user: str = Depends(get_current_user)
 ):
@@ -50,7 +52,7 @@ async def get_transaction(tx_id: str, current_user: str = Depends(get_current_us
     return fix_id(doc)
 
 
-@router.post("/filter", response_model=List[TransactionOut])
+@router.post("/filter", response_model=List[TransactionResponse])
 async def filter_transactions(
     filters: TransactionRequest, current_user: str = Depends(get_current_user)
 ):
@@ -102,8 +104,7 @@ async def update_transaction(
 
 @router.delete("/{txn_id}")
 async def delete_transaction(
-    txn_id: str = Path(...),
-    current_user: dict = Depends(get_current_user)
+    txn_id: str = Path(...), current_user: dict = Depends(get_current_user)
 ):
     try:
         txn_object_id = ObjectId(txn_id)

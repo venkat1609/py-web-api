@@ -31,7 +31,7 @@ class TransactionUpdate(BaseModel):
     )
 
 
-class TransactionOut(TransactionBase):
+class TransactionResponse(TransactionBase):
     id: str
     createdAt: datetime
     updatedAt: datetime

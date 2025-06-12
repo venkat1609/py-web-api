@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import auth, transactions, categories
+from fastapi.responses import JSONResponse
+from datetime import datetime
 
 app = FastAPI()
 
@@ -14,6 +16,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/health")
+async def health_check():
+    return JSONResponse(
+        content={"status": "ok", "timestamp": datetime.utcnow().isoformat()},
+        status_code=200,
+    )
+
 
 # Include the authentication router
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
