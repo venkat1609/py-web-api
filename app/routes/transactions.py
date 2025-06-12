@@ -25,7 +25,7 @@ async def create_transaction(
 
     now = datetime.utcnow()
     data = tx.dict()
-    data["user_id"] = current_user["_id"]
+    data["userId"] = current_user["_id"]
     data["createdAt"] = now
     data["updatedAt"] = now
 
@@ -65,12 +65,12 @@ async def filter_transactions(
         except:
             raise HTTPException(status_code=400, detail="Invalid txn_id")
 
-    # Filter by different user_id (admin usage maybe)
-    if "user_id" in filters:
+    # Filter by different userId (admin usage maybe)
+    if "userId" in filters:
         try:
-            query["user_id"] = ObjectId(filters["user_id"])
+            query["userId"] = ObjectId(filters["userId"])
         except:
-            raise HTTPException(status_code=400, detail="Invalid user_id")
+            raise HTTPException(status_code=400, detail="Invalid userId")
 
     cursor = collection.find(fix_id(query)).sort("date", -1)
     results = [fix_id(doc) async for doc in cursor]
@@ -88,7 +88,7 @@ async def update_transaction(
     except:
         raise HTTPException(status_code=400, detail="Invalid transaction ID")
 
-    query = {"_id": txn_object_id, "user_id": ObjectId(current_user["_id"])}
+    query = {"_id": txn_object_id, "userId": ObjectId(current_user["_id"])}
     update = {"$set": {k: v for k, v in payload.dict().items() if v is not None}}
 
     result = await collection.update_one(query, update)
@@ -111,7 +111,7 @@ async def delete_transaction(
     except:
         raise HTTPException(status_code=400, detail="Invalid transaction ID")
 
-    query = {"_id": txn_object_id, "user_id": ObjectId(current_user["_id"])}
+    query = {"_id": txn_object_id, "userId": ObjectId(current_user["_id"])}
     result = await collection.delete_one(query)
 
     if result.deleted_count == 0:
