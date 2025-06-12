@@ -6,6 +6,8 @@ from datetime import datetime
 from PIL import Image
 import pytesseract
 import io
+from app.scheduler import start_scheduler
+
 
 app = FastAPI()
 
@@ -20,14 +22,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.on_event("startup")
+async def on_startup():
+    start_scheduler()
+    print("Scheduler started.")
+
+
 @app.get("/health")
 async def health_check():
     return JSONResponse(
         content={"status": "ok", "timestamp": datetime.utcnow().isoformat()},
         status_code=200,
     )
+
+
 # Set tesseract path on Windows
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
 
 @app.post("/extract-receipt")
 async def extract_receipt(image: UploadFile = File(...)):

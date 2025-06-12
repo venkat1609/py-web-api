@@ -44,7 +44,37 @@ async def list_transactions(current_user: str = Depends(get_current_user)):
     return results
 
 
-@router.get("/{tx_id}")
+@router.get("/expense-summary-by-category")
+async def get_expense_summary_by_category(
+    current_user: dict = Depends(get_current_user),
+):
+
+    pipeline = [
+        {"$match": {"type": "expense"}},
+        {
+            "$group": {
+                "_id": "$categoryId",
+                "totalAmount": {"$sum": "$amount"},
+                "count": {"$sum": 1},
+            }
+        },
+        {"$sort": {"totalAmount": -1}},  # optional: sort by total descending
+    ]
+
+    results = [doc async for doc in collection.aggregate(pipeline)]  # ✅ Correct for Motor
+
+    # Rename fields for cleaner response
+    return [
+        {
+            "category": item["_id"],
+            "totalAmount": item["totalAmount"],
+            "count": item["count"],
+        }
+        for item in results
+    ]
+
+
+@router.get("/getTransactionById/{tx_id}")
 async def get_transaction(tx_id: str, current_user: str = Depends(get_current_user)):
     doc = await collection.find_one({"_id": ObjectId(tx_id)})
     if not doc:
