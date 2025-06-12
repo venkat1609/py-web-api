@@ -57,8 +57,8 @@ class TransactionUpdate(BaseModel):  # Optional so partial updates work
     title: Optional[str] = None
     amount: Optional[float] = None
     currency: Optional[str] = None
-    type: Optional[float] = None
-    type_name: Optional[float] = None
+    type: Optional[str] = None
+    type_name: Optional[str] = None
     category_id: Optional[str] = None
     category_name: Optional[str] = None
     date: Optional[datetime] = None
@@ -67,14 +67,14 @@ class TransactionUpdate(BaseModel):  # Optional so partial updates work
     linkedSubscriptionId: Optional[str] = None
     linkedLoanId: Optional[str] = None
     person: Optional[str] = None
-    isGroup: Optional[bool] = None 
+    isGroup: Optional[bool] = None
     groupId: Optional[str] = None
     participants: Optional[list[GroupBase]] = None
-    
+
     isRecurring: Optional[bool] = None
-    recurrenceType: Optional[str] = None   
+    recurrenceType: Optional[str] = None
     endRecurrence: Optional[datetime] = None
-    
+
     createdAt: Optional[datetime] = None
     updatedAt: Optional[datetime] = None
 

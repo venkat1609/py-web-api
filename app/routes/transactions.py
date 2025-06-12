@@ -72,7 +72,7 @@ async def filter_transactions(
         except:
             raise HTTPException(status_code=400, detail="Invalid userId")
 
-    cursor = collection.find(fix_id(query)).sort("date", -1)
+    cursor = collection.find(query).sort("date", -1)
     results = [fix_id(doc) async for doc in cursor]
     return results
 
