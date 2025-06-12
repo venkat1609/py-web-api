@@ -8,3 +8,7 @@ pydantic
 python-dotenv
 motor
 pydantic[email]
+pytesseract
+pillow
+opencv-python
+numpy

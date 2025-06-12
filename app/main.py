@@ -1,8 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import auth, transactions, categories
 from fastapi.responses import JSONResponse
 from datetime import datetime
+from PIL import Image
+import pytesseract
+import io
 
 app = FastAPI()
 
@@ -23,6 +26,27 @@ async def health_check():
         content={"status": "ok", "timestamp": datetime.utcnow().isoformat()},
         status_code=200,
     )
+# Set tesseract path on Windows
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+
+@app.post("/extract-receipt")
+async def extract_receipt(image: UploadFile = File(...)):
+    if image.content_type not in ["image/jpeg", "image/png"]:
+        raise HTTPException(
+            status_code=400, detail="Only JPEG and PNG files are supported."
+        )
+
+    # Read image from upload
+    image_bytes = await image.read()
+    img = Image.open(io.BytesIO(image_bytes))
+
+    # Extract text with pytesseract
+    try:
+        text = pytesseract.image_to_string(img)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    return JSONResponse(content={"raw_text": text})
 
 
 # Include the authentication router
