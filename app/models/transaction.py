@@ -17,9 +17,9 @@ class TransactionBase(BaseModel):
     amount: float
     currency: str = Field(default="AED", description="Currency code, e.g., USD, EUR")
     type: str  # income, expense, debt, investment
-    type_name: str  # income, expense, debt, investment
-    category_id: str  # foreign key reference to categories._id
-    category_name: str  # foreign key reference to categories._id
+    typeName: str  # income, expense, debt, investment
+    categoryId: str  # foreign key reference to categories._id
+    categoryName: str  # foreign key reference to categories._id
     date: datetime = Field(
         default_factory=datetime.utcnow, description="Creation timestamp"
     )
@@ -28,18 +28,9 @@ class TransactionBase(BaseModel):
 
     linkedSubscriptionId: Optional[str] = None  # Optional for linking to a subscription
     linkedLoanId: Optional[str] = None  # Optional for linking to a Loan
+    linkedUserId: Optional[str] = None  # Only filled for lend/borrow
+    linkedGroupId: Optional[str] = None
 
-    person: Optional[str] = None  # Only filled for lend/borrow
-
-    isGroup: bool = False  # True if the transaction is shared with a group
-    groupId: Optional[str] = None
-    participants: Optional[list[GroupBase]] = (
-        None  # List of user IDs participating in the transaction
-    )
-
-    isRecurring: bool = False  # True if the transaction is recurring
-    recurrenceType: Optional[str] = None  # e.g., daily, weekly, monthly
-    endRecurrence: Optional[datetime] = None  # End date for recurring transactions
     createdAt: datetime = Field(
         default_factory=datetime.utcnow, description="Creation timestamp"
     )
@@ -58,22 +49,17 @@ class TransactionUpdate(BaseModel):  # Optional so partial updates work
     amount: Optional[float] = None
     currency: Optional[str] = None
     type: Optional[str] = None
-    type_name: Optional[str] = None
-    category_id: Optional[str] = None
-    category_name: Optional[str] = None
+    typeName: Optional[str] = None
+    categoryId: Optional[str] = None
+    categoryName: Optional[str] = None
     date: Optional[datetime] = None
     notes: Optional[str] = None
     attachment: Optional[str] = None
+
     linkedSubscriptionId: Optional[str] = None
     linkedLoanId: Optional[str] = None
-    person: Optional[str] = None
-    isGroup: Optional[bool] = None
-    groupId: Optional[str] = None
-    participants: Optional[list[GroupBase]] = None
-
-    isRecurring: Optional[bool] = None
-    recurrenceType: Optional[str] = None
-    endRecurrence: Optional[datetime] = None
+    linkedUserId: Optional[str] = None
+    linkedGroupId: Optional[str] = None
 
     createdAt: Optional[datetime] = None
     updatedAt: Optional[datetime] = None
