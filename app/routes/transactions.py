@@ -3,6 +3,7 @@ from app.models.transaction import (
     TransactionCreate,
     TransactionUpdate,
     TransactionOut,
+    TransactionRequest
 )
 from app.db.mongo import db
 from bson import ObjectId
@@ -10,7 +11,6 @@ from datetime import datetime
 from typing import List, Optional, Dict
 from app.utils.helpers import fix_id
 from app.routes.auth import get_current_user  # 👈 New import
-from app.schemas.transaction import TransactionRequest
 
 router = APIRouter()
 collection = db["transactions"]

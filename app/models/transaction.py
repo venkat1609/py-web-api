@@ -11,9 +11,8 @@ class TransactionBase(BaseModel):
     notes: Optional[str] = None
     user_id: str  # foreign key reference to users._id
     category: float  # foreign key reference to categories._id
-    currency: str = Field(
-        default="AED", description="Currency code, e.g., USD, EUR"
-    )
+    currency: str = Field(default="AED", description="Currency code, e.g., USD, EUR")
+
 
 class TransactionCreate(TransactionBase):
     pass
@@ -36,3 +35,8 @@ class TransactionOut(TransactionBase):
     id: str
     createdAt: datetime
     updatedAt: datetime
+
+
+class TransactionRequest(BaseModel):
+    id: str
+    user_id: str

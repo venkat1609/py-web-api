@@ -5,13 +5,12 @@ from fastapi.security import (
     HTTPBearer,
     HTTPAuthorizationCredentials,
 )
-from app.schemas.user import User, Token
+from app.models.user import User, UserOut, LoginRequest, UserResponse
 from app.core.security import hash_password, verify_password
 from app.core.jwt import create_access_token, get_current_user
 from app.db.mongo import db
 from app.utils.helpers import fix_id  # assuming you use the helper
 from typing import Union, List
-from app.schemas.user import UserOut, LoginRequest, UserResponse, UserInDB
 
 router = APIRouter()
 security = HTTPBasic()
