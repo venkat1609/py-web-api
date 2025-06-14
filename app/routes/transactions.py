@@ -44,69 +44,6 @@ async def list_transactions(current_user: str = Depends(get_current_user)):
     return results
 
 
-@router.get("/expense-summary-by-category")
-async def get_expense_summary_by_category(
-    current_user: dict = Depends(get_current_user),
-):
-
-    pipeline = [
-        {"$match": {"type": "expense"}},
-        {
-            "$group": {
-                "_id": "$categoryId",
-                "totalAmount": {"$sum": "$amount"},
-                "count": {"$sum": 1},
-            }
-        },
-        {"$sort": {"totalAmount": -1}},  # optional: sort by total descending
-    ]
-
-    results = [doc async for doc in collection.aggregate(pipeline)]  # ✅ Correct for Motor
-
-    # Rename fields for cleaner response
-    return [
-        {
-            "category": item["_id"],
-            "totalAmount": item["totalAmount"],
-            "count": item["count"],
-        }
-        for item in results
-    ]
-
-
-@router.get("/getTransactionById/{tx_id}")
-async def get_transaction(tx_id: str, current_user: str = Depends(get_current_user)):
-    doc = await collection.find_one({"_id": ObjectId(tx_id)})
-    if not doc:
-        raise HTTPException(status_code=404, detail="Transaction not found")
-    return fix_id(doc)
-
-
-@router.post("/filter", response_model=List[TransactionResponse])
-async def filter_transactions(
-    filters: TransactionRequest, current_user: str = Depends(get_current_user)
-):
-    query = {}
-
-    # Filter by transaction ID (optional)
-    if "id" in filters:
-        try:
-            query["_id"] = ObjectId(filters["id"])
-        except:
-            raise HTTPException(status_code=400, detail="Invalid txn_id")
-
-    # Filter by different userId (admin usage maybe)
-    if "userId" in filters:
-        try:
-            query["userId"] = ObjectId(filters["userId"])
-        except:
-            raise HTTPException(status_code=400, detail="Invalid userId")
-
-    cursor = collection.find(query).sort("date", -1)
-    results = [fix_id(doc) async for doc in cursor]
-    return results
-
-
 @router.put("/{txn_id}")
 async def update_transaction(
     txn_id: str = Path(...),
@@ -148,3 +85,86 @@ async def delete_transaction(
         raise HTTPException(status_code=404, detail="Transaction not found")
 
     return {"message": "Transaction deleted successfully"}
+
+
+@router.get("/getTransactionById/{tx_id}")
+async def get_transaction(tx_id: str, current_user: str = Depends(get_current_user)):
+    doc = await collection.find_one({"_id": ObjectId(tx_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    return fix_id(doc)
+
+
+@router.post("/filter", response_model=List[TransactionResponse])
+async def filter_transactions(
+    filters: TransactionRequest, current_user: str = Depends(get_current_user)
+):
+    query = {}
+
+    # Filter by transaction ID (optional)
+    if "id" in filters:
+        try:
+            query["_id"] = ObjectId(filters["id"])
+        except:
+            raise HTTPException(status_code=400, detail="Invalid txn_id")
+
+    # Filter by different userId (admin usage maybe)
+    if "userId" in filters:
+        try:
+            query["userId"] = ObjectId(filters["userId"])
+        except:
+            raise HTTPException(status_code=400, detail="Invalid userId")
+
+    cursor = collection.find(query).sort("date", -1)
+    results = [fix_id(doc) async for doc in cursor]
+    return results
+
+
+@router.get("/expense-summary-by-category")
+async def get_expense_summary_by_category(
+    current_user: dict = Depends(get_current_user),
+):
+    exchange_rates_collection = db["exchange_rates"]
+
+    rate_doc = await exchange_rates_collection.find_one(
+        {"base": "usd"}, sort=[("fetched_at", -1)]
+    )
+
+    if not rate_doc:
+        raise HTTPException(status_code=500, detail="Exchange rates not available.")
+
+    rates = rate_doc["rates"]  # e.g., { "aed": 3.67, "inr": 83.2, ... }
+
+    print(current_user)
+
+    # 2. Get all user's expense transactions
+    transactions_cursor = collection.find(
+        {"type": "expense", "userId": ObjectId(current_user["_id"])}
+    )
+
+    category_summary = {}
+
+    async for tx in transactions_cursor:
+        category_id = str(tx["categoryId"])
+        currency = tx["currency"].lower()
+        amount = tx["amount"]
+
+        rate = rates.get(currency)
+        if rate is None or rate == 0:
+            continue  # Skip unknown or invalid currencies
+
+        amount_in_usd = amount / rate  # Convert to USD
+
+        if category_id not in category_summary:
+            category_summary[category_id] = {"totalAmount": 0, "count": 0}
+
+        category_summary[category_id]["totalAmount"] += amount_in_usd
+        category_summary[category_id]["count"] += 1
+        category_summary[category_id]["currency"] = "usd"
+
+    # 3. Format and sort result
+    result = [{"category": cat_id, **data} for cat_id, data in category_summary.items()]
+    result.sort(key=lambda x: x["totalAmount"], reverse=True)
+
+    # Rename fields for cleaner response
+    return result

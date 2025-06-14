@@ -1,6 +1,6 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import auth, transactions, categories
+from app.routes import auth, transactions, categories, exchangeRates
 from fastapi.responses import JSONResponse
 from datetime import datetime
 from PIL import Image
@@ -65,3 +65,4 @@ async def extract_receipt(image: UploadFile = File(...)):
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(transactions.router, prefix="/transactions", tags=["transactions"])
 app.include_router(categories.router, prefix="/categories", tags=["categories"])
+app.include_router(exchangeRates.router, prefix="/exchangeRates", tags=["exchangeRates"])
