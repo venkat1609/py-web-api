@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
 
+
 class SubscriptionBase(BaseModel):
     userId: str  # foreign key reference to users._id
     title: str
@@ -19,7 +20,7 @@ class SubscriptionBase(BaseModel):
         default_factory=datetime.utcnow, description="Start date timestamp"
     )
 
-    endDate: datetime = Field(
+    endDate: Optional[datetime] = Field(
         default_factory=datetime.utcnow, description="End date timestamp"
     )
 
