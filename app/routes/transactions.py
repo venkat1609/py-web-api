@@ -108,12 +108,8 @@ async def filter_transactions(
         except:
             raise HTTPException(status_code=400, detail="Invalid txn_id")
 
-    # Filter by different userId (admin usage maybe)
-    if "userId" in filters:
-        try:
-            query["userId"] = ObjectId(filters["userId"])
-        except:
-            raise HTTPException(status_code=400, detail="Invalid userId")
+    query["userId"] = ObjectId(current_user["_id"])
+
 
     cursor = collection.find(query).sort("date", -1)
     results = [fix_id(doc) async for doc in cursor]
@@ -145,7 +141,7 @@ async def get_expense_summary_by_category(
     category_summary = {}
 
     async for tx in transactions_cursor:
-        category_id = str(tx["categoryId"])
+        category_id = str(tx["category"])
         currency = tx["currency"].lower()
         amount = tx["amount"]
 
@@ -161,6 +157,8 @@ async def get_expense_summary_by_category(
         category_summary[category_id]["totalAmount"] += amount_in_usd
         category_summary[category_id]["count"] += 1
         category_summary[category_id]["currency"] = "usd"
+    
+    print("ASYNC", category_summary)
 
     # 3. Format and sort result
     result = [{"category": cat_id, **data} for cat_id, data in category_summary.items()]

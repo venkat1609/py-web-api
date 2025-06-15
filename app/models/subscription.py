@@ -11,10 +11,8 @@ class SubscriptionBase(BaseModel):
     currency: str = Field(default="AED", description="Currency code, e.g., USD, EUR")
 
     type: str  # income, expense, debt, investment
-    typeName: str  # income, expense, debt, investment
 
-    categoryId: str  # foreign key reference to categories._id
-    categoryName: str  # foreign key reference to categories._id
+    category: str  # foreign key reference to categories._id
 
     startDate: datetime = Field(
         default_factory=datetime.utcnow, description="Start date timestamp"
@@ -48,10 +46,8 @@ class SubscriptionUpdate(BaseModel):  # Optional so partial updates work
     currency: Optional[str] = None
 
     type: Optional[str] = None
-    typeName: Optional[str] = None
 
-    categoryId: Optional[str] = None
-    categoryName: Optional[str] = None
+    category: Optional[str] = None
 
     startDate: Optional[datetime] = None
     endDate: Optional[datetime] = None

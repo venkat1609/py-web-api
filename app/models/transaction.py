@@ -17,9 +17,7 @@ class TransactionBase(BaseModel):
     amount: float
     currency: str = Field(default="AED", description="Currency code, e.g., USD, EUR")
     type: str  # income, expense, debt, investment
-    typeName: str  # income, expense, debt, investment
-    categoryId: str  # foreign key reference to categories._id
-    categoryName: str  # foreign key reference to categories._id
+    category: str  # foreign key reference to categories._id
     date: datetime = Field(
         default_factory=datetime.utcnow, description="Creation timestamp"
     )
@@ -49,9 +47,7 @@ class TransactionUpdate(BaseModel):  # Optional so partial updates work
     amount: Optional[float] = None
     currency: Optional[str] = None
     type: Optional[str] = None
-    typeName: Optional[str] = None
-    categoryId: Optional[str] = None
-    categoryName: Optional[str] = None
+    category: Optional[str] = None
     date: Optional[datetime] = None
     notes: Optional[str] = None
     attachment: Optional[str] = None

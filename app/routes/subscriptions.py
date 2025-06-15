@@ -108,12 +108,7 @@ async def filter_subscriptions(
         except:
             raise HTTPException(status_code=400, detail="Invalid sub_id")
 
-    # Filter by different userId (admin usage maybe)
-    if "userId" in filters:
-        try:
-            query["userId"] = ObjectId(filters["userId"])
-        except:
-            raise HTTPException(status_code=400, detail="Invalid userId")
+    query["userId"] = ObjectId(current_user["_id"])
 
     cursor = collection.find(query).sort("date", -1)
     results = [fix_id(doc) async for doc in cursor]
