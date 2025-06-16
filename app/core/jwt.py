@@ -24,10 +24,10 @@ async def get_current_user(
     token = credentials.credentials
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username = payload.get("sub")
-        if username is None:
+        user_name = payload.get("sub")
+        if user_name is None:
             raise ValueError
-        user = await collection.find_one({"username": username})
+        user = await collection.find_one({"user_name": user_name})
         if not user:
             raise ValueError
         return user

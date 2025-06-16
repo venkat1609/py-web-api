@@ -131,8 +131,6 @@ async def get_expense_summary_by_category(
 
     rates = rate_doc["rates"]  # e.g., { "aed": 3.67, "inr": 83.2, ... }
 
-    print(current_user)
-
     # 2. Get all user's expense transactions
     transactions_cursor = collection.find(
         {"type": "expense", "userId": ObjectId(current_user["_id"])}
@@ -158,8 +156,6 @@ async def get_expense_summary_by_category(
         category_summary[category_id]["count"] += 1
         category_summary[category_id]["currency"] = "usd"
     
-    print("ASYNC", category_summary)
-
     # 3. Format and sort result
     result = [{"category": cat_id, **data} for cat_id, data in category_summary.items()]
     result.sort(key=lambda x: x["totalAmount"], reverse=True)

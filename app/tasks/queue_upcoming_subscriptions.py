@@ -1,8 +1,6 @@
 import httpx
 from datetime import datetime, timedelta
 from app.db.mongo import db
-from app.models.user import UserResponse
-from bson import ObjectId
 
 RECURRENCE_MAP = {"monthly": 30, "quarterly": 90, "yearly": 365}
 

@@ -20,46 +20,48 @@ collection = db["users"]
 
 @router.post("/register")
 async def register(user: User):
-    existing_user = await collection.find_one({"username": user.username})
+    existing_user = await collection.find_one({"user_name": user["user_name"]})
     if existing_user:
         raise HTTPException(status_code=400, detail="Username already exists")
 
     # Check for existing email
-    existing_email = await collection.find_one({"email": user.email})
+    existing_email = await collection.find_one({"email": user["email"]})
     if existing_email:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    hashed = hash_password(user.password)
+    hashed_password = hash_password(user.password)
     user_data = {
-        "username": user.username,
-        "email": user.email,
-        "hashed_password": hashed,
-        "age": user.age,
+        "first_name": user["first_name"],
+        "last_name": user["last_name"],
+        "user_name": user["user_name"],
+        "email": user["email"],
+        "phone_number": user["phone_number"],
+        "date_of_birth": user["date_of_birth"],
+        "profile_image": user["profile_image"],
+        "is_phone_verified": user["is_phone_verified"],
+        "is_email_verified": user["is_email_verified"],
+        "hashed_password": hashed_password,
     }
 
     await collection.insert_one(user_data)
 
-    access_token = create_access_token(data={"sub": user_data["username"]})
+    access_token = create_access_token(data={"sub": user_data["userName"]})
 
     user = {
         "id": str(user_data["_id"]),
-        "username": user_data["username"],
+        "first_name": user_data["first_name"],
+        "last_name": user_data["last_name"],
+        "user_name": user_data["user_name"],
         "email": user_data["email"],
-        "age": user_data["age"],
+        "phone_number": user_data["phone_number"],
+        "date_of_birth": user_data["date_of_birth"],
+        "profile_image": user_data["profile_image"],
+        "is_phone_verified": user_data["is_phone_verified"],
+        "is_email_verified": user_data["is_email_verified"],
         "access_token": access_token,
-        "token_type": "bearer",
     }
 
     return user
-
-
-def mongo_to_user(user):
-    return {
-        "id": str(user["_id"]),
-        "username": user["username"],
-        "email": user["email"],
-        "age": user["age"],
-    }
 
 
 async def get_all_users_from_db():
@@ -70,9 +72,15 @@ async def get_all_users_from_db():
         users.append(
             UserResponse(
                 id=str(user["_id"]),
-                username=user["username"],
+                first_name=user["first_name"],
+                last_name=user["last_name"],
+                username=user["user_name"],
                 email=user["email"],
-                age=user["age"],
+                phone_number=user["phone_number"],
+                date_of_birth=user["date_of_birth"],
+                profile_image=user["profile_image"],
+                is_phone_verified=user["is_phone_verified"],
+                is_email_verified=user["is_email_verified"],
             )
         )
 
@@ -88,18 +96,25 @@ async def get_users():
 
 @router.post("/login")
 async def login(credentials: LoginRequest):
-    user = await collection.find_one({"username": credentials.username})
-    if not user or not verify_password(credentials.password, user["hashed_password"]):
+    user = await collection.find_one({"user_name": credentials.user_name})
+    if not user or not verify_password(
+        credentials.password, user["hashed_password"]
+    ):
         raise HTTPException(status_code=400, detail="Invalid credentials")
-    access_token = create_access_token(data={"sub": user["username"]})
+    access_token = create_access_token(data={"sub": user["user_name"]})
 
     user_data = {
         "id": str(user["_id"]),
-        "username": user["username"],
+        "first_name": user["first_name"],
+        "last_name": user["last_name"],
+        "user_name": user["user_name"],
         "email": user["email"],
-        "age": user["age"],
+        "phone_number": user["phone_number"],
+        "date_of_birth": user["date_of_birth"],
+        "profile_image": user["profile_image"],
+        "is_phone_verified": user["is_phone_verified"],
+        "is_email_verified": user["is_email_verified"],
         "access_token": access_token,
-        "token_type": "bearer",
     }
 
     return user_data
