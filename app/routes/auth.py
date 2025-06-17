@@ -45,7 +45,7 @@ async def register(user: User):
 
     await collection.insert_one(user_data)
 
-    access_token = create_access_token(data={"sub": user_data["userName"]})
+    access_token = create_access_token(data={"sub": user_data["user_name"]})
 
     user = {
         "id": str(user_data["_id"]),
