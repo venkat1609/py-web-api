@@ -110,7 +110,6 @@ async def filter_transactions(
 
     query["userId"] = ObjectId(current_user["_id"])
 
-
     cursor = collection.find(query).sort("date", -1)
     results = [fix_id(doc) async for doc in cursor]
     return results
@@ -155,10 +154,140 @@ async def get_expense_summary_by_category(
         category_summary[category_id]["totalAmount"] += amount_in_usd
         category_summary[category_id]["count"] += 1
         category_summary[category_id]["currency"] = "usd"
-    
+
     # 3. Format and sort result
     result = [{"category": cat_id, **data} for cat_id, data in category_summary.items()]
     result.sort(key=lambda x: x["totalAmount"], reverse=True)
 
     # Rename fields for cleaner response
     return result
+
+
+@router.post("/overall-expense")
+async def get_overall_expense(
+    filters: dict = Body(default={}),
+    current_user: dict = Depends(get_current_user),
+):
+    from_date_str = filters.get("from_date")
+    to_date_str = filters.get("to_date")
+    exchange_rates_collection = db["exchange_rates"]
+    match_filter = {
+        "type": "expense",
+        "userId": ObjectId(current_user["_id"]),
+    }
+
+    if from_date_str:
+        try:
+            from_date = datetime.fromisoformat(from_date_str)
+            match_filter["createdAt"] = {"$gte": from_date}
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid from_date format.")
+
+    if to_date_str:
+        try:
+            to_date = datetime.fromisoformat(to_date_str)
+            if "createdAt" in match_filter:
+                match_filter["createdAt"]["$lte"] = to_date
+            else:
+                match_filter["createdAt"] = {"$lte": to_date}
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid to_date format.")
+
+    # 1. Get latest exchange rates
+    rate_doc = await exchange_rates_collection.find_one(
+        {"base": "usd"}, sort=[("fetched_at", -1)]
+    )
+
+    if not rate_doc:
+        raise HTTPException(status_code=500, detail="Exchange rates not available.")
+
+    rates = rate_doc["rates"]  # e.g., { "aed": 3.67, "inr": 83.2, ... }
+
+    # 2. Get filtered expense transactions
+    transactions_cursor = collection.find(match_filter)
+
+    category_summary = {"totalAmount": 0, "count": 0, "currency": "usd"}
+
+    async for tx in transactions_cursor:
+        currency = tx.get("currency", "usd").lower()
+        amount = tx.get("amount", 0)
+
+        rate = rates.get(currency)
+        if rate is None or rate == 0:
+            continue  # Skip unknown or invalid currencies
+
+        amount_in_usd = amount / rate
+        category_summary["totalAmount"] += amount_in_usd
+        category_summary["count"] += 1
+
+    return category_summary
+
+
+@router.post("/balance-summary")
+async def get_balance_summary(
+    filters: dict = Body(default={}),
+    current_user: dict = Depends(get_current_user),
+):
+    from_date_str = filters.get("from_date")
+    to_date_str = filters.get("to_date")
+
+    match_filter = {
+        "userId": ObjectId(current_user["_id"]),
+    }
+
+    # Apply date range filter
+    if from_date_str:
+        try:
+            from_date = datetime.fromisoformat(from_date_str)
+            match_filter["createdAt"] = {"$gte": from_date}
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid from_date format.")
+
+    if to_date_str:
+        try:
+            to_date = datetime.fromisoformat(to_date_str)
+            if "createdAt" in match_filter:
+                match_filter["createdAt"]["$lte"] = to_date
+            else:
+                match_filter["createdAt"] = {"$lte": to_date}
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid to_date format.")
+
+    # Get latest USD exchange rates
+    rate_doc = await db["exchange_rates"].find_one(
+        {"base": "usd"}, sort=[("fetched_at", -1)]
+    )
+    if not rate_doc:
+        raise HTTPException(status_code=500, detail="Exchange rates not available.")
+    rates = rate_doc["rates"]
+
+    income_total = 0.0
+    expense_total = 0.0
+    currency = "usd"
+
+    cursor = collection.find(match_filter)
+
+    async for tx in cursor:
+        amount = tx.get("amount", 0)
+        tx_type = tx.get("type")
+        tx_currency = tx.get("currency", "usd").lower()
+
+        rate = rates.get(tx_currency)
+        if rate is None or rate == 0:
+            continue
+
+        amount_in_usd = amount / rate
+
+        if tx_type == "income":
+            income_total += amount_in_usd
+        elif tx_type == "expense":
+            expense_total += amount_in_usd
+
+    balance = income_total - expense_total
+
+    return {
+        "income": round(income_total, 2),
+        "expense": round(expense_total, 2),
+        "balance": round(balance, 2),
+        "currency": currency,
+    }
