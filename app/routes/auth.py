@@ -20,26 +20,26 @@ collection = db["users"]
 
 @router.post("/register")
 async def register(user: User):
-    existing_user = await collection.find_one({"user_name": user["user_name"]})
+    existing_user = await collection.find_one({"user_name": user.user_name})
     if existing_user:
         raise HTTPException(status_code=400, detail="Username already exists")
 
     # Check for existing email
-    existing_email = await collection.find_one({"email": user["email"]})
+    existing_email = await collection.find_one({"email": user.email})
     if existing_email:
         raise HTTPException(status_code=400, detail="Email already registered")
 
     hashed_password = hash_password(user.password)
     user_data = {
-        "first_name": user["first_name"],
-        "last_name": user["last_name"],
-        "user_name": user["user_name"],
-        "email": user["email"],
-        "phone_number": user["phone_number"],
-        "date_of_birth": user["date_of_birth"],
-        "profile_image": user["profile_image"],
-        "is_phone_verified": user["is_phone_verified"],
-        "is_email_verified": user["is_email_verified"],
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "user_name": user.user_name,
+        "email": user.email,
+        "phone_number": user.phone_number,
+        "date_of_birth": user.date_of_birth,
+        "profile_image": user.profile_image,
+        "is_phone_verified": user.is_phone_verified,
+        "is_email_verified": user.is_email_verified,
         "hashed_password": hashed_password,
     }
 
@@ -97,9 +97,7 @@ async def get_users():
 @router.post("/login")
 async def login(credentials: LoginRequest):
     user = await collection.find_one({"user_name": credentials.user_name})
-    if not user or not verify_password(
-        credentials.password, user["hashed_password"]
-    ):
+    if not user or not verify_password(credentials.password, user["hashed_password"]):
         raise HTTPException(status_code=400, detail="Invalid credentials")
     access_token = create_access_token(data={"sub": user["user_name"]})
 
