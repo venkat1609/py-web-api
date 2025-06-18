@@ -2,6 +2,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import (
     auth,
+    users,
     transactions,
     categories,
     exchangeRates,
@@ -70,6 +71,7 @@ async def extract_receipt(image: UploadFile = File(...)):
 
 # Include the authentication router
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(users.router, prefix="/users", tags=["users"])
 app.include_router(transactions.router, prefix="/transactions", tags=["transactions"])
 app.include_router(categories.router, prefix="/categories", tags=["categories"])
 app.include_router(

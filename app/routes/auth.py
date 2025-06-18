@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.security import (
     HTTPBasic,
     HTTPBasicCredentials,
@@ -11,6 +11,8 @@ from app.core.jwt import create_access_token, get_current_user
 from app.db.mongo import db
 from app.utils.helpers import fix_id  # assuming you use the helper
 from typing import Union, List
+import re
+from pymongo import ASCENDING
 
 router = APIRouter()
 security = HTTPBasic()
@@ -74,7 +76,7 @@ async def get_all_users_from_db():
                 id=str(user["_id"]),
                 first_name=user["first_name"],
                 last_name=user["last_name"],
-                username=user["user_name"],
+                user_name=user["user_name"],
                 email=user["email"],
                 phone_number=user["phone_number"],
                 date_of_birth=user["date_of_birth"],
