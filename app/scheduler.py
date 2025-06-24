@@ -9,7 +9,6 @@ scheduler = AsyncIOScheduler()
 
 
 def start_scheduler():
-    # Fetch every day at 00:00 UTC (can customize to your needs)
     scheduler.start()
     asyncio.create_task(fetch_and_store_rates())  # run immediately
     # asyncio.create_task(queue_upcoming_subscriptions())  # run immediately
