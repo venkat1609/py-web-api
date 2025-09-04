@@ -24,19 +24,24 @@ async def get_current_user(
     token = credentials.credentials
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_name = payload.get("sub");
-        email = payload.get("sub");
-        if user_name is None:
-            if email is None:
-                raise ValueError
-            user = await collection.find_one({"email": email})
-            if not user:
-                raise ValueError
-            return user
-        user = await collection.find_one({"user_name": user_name})
+        sub = payload.get("sub")
+
+        if not sub:
+            raise ValueError("Token missing 'sub' claim")
+
+        # Determine if sub looks like an email (simple check)
+        if "@" in sub:
+            # Treat sub as email
+            user = await collection.find_one({"email": sub})
+        else:
+            # Treat sub as username
+            user = await collection.find_one({"user_name": sub})
+
         if not user:
-            raise ValueError
+            raise ValueError("User not found")
+
         return user
+
     except (JWTError, ValueError):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
