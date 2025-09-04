@@ -14,3 +14,9 @@ opencv-python
 numpy
 httpx
 apscheduler
+python-
+google-auth
+passlib
+python-jose
+motor
+apscheduler

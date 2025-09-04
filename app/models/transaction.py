@@ -2,15 +2,6 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
 
-
-class GroupBase(BaseModel):
-    id: str
-    name: str
-    amount: float
-    createdAt: datetime
-    updatedAt: datetime
-
-
 class TransactionBase(BaseModel):
     userId: str  # foreign key reference to users._id
     title: str
@@ -35,6 +26,7 @@ class TransactionBase(BaseModel):
     updatedAt: datetime = Field(
         default_factory=datetime.utcnow, description="Last update timestamp"
     )
+    status: str
 
 
 class TransactionCreate(TransactionBase):
@@ -59,7 +51,8 @@ class TransactionUpdate(BaseModel):  # Optional so partial updates work
 
     createdAt: Optional[datetime] = None
     updatedAt: Optional[datetime] = None
-
+    status: Optional[str]
+    
 
 class TransactionResponse(TransactionBase):
     id: str

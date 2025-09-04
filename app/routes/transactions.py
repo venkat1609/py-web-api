@@ -11,6 +11,7 @@ from datetime import datetime
 from typing import List
 from app.utils.helpers import fix_id
 from app.routes.auth import get_current_user  # 👈 New import
+from app.utils.enums import TransactionStatus
 
 router = APIRouter()
 collection = db["transactions"]
@@ -132,7 +133,7 @@ async def get_expense_summary_by_category(
 
     # 2. Get all user's expense transactions
     transactions_cursor = collection.find(
-        {"type": "expense", "userId": ObjectId(current_user["_id"])}
+        {"type": "expense", "status":  TransactionStatus.completed, "userId": ObjectId(current_user["_id"])}
     )
 
     category_summary = {}

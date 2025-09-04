@@ -8,6 +8,7 @@ from app.routes import (
     exchangeRates,
     subscriptions,
     friendships,
+    loans
 )
 from fastapi.responses import JSONResponse
 from datetime import datetime
@@ -82,3 +83,4 @@ app.include_router(
 )
 
 app.include_router(friendships.router, prefix="/friendships", tags=["friendships"])
+app.include_router(loans.router, prefix="/loans", tags=["loans"])
