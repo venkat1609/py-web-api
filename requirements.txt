@@ -16,3 +16,4 @@ httpx
 google-auth
 passlib
 apscheduler
+requests
