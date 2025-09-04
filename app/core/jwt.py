@@ -29,7 +29,7 @@ async def get_current_user(
         if user_name is None:
             if email is None:
                 raise ValueError
-            user = await collection.find_one({"user_name": user_name})
+            user = await collection.find_one({"email": email})
             if not user:
                 raise ValueError
             return user
