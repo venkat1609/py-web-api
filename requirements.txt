@@ -1,3 +1,4 @@
+pip
 fastapi
 uvicorn
 bcrypt==4.0.1
@@ -16,5 +17,3 @@ httpx
 google-auth
 passlib
 apscheduler
-requests
-dateutil
