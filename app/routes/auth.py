@@ -20,6 +20,10 @@ import os
 import random
 import smtplib
 from email.message import EmailMessage
+from dotenv import load_dotenv
+
+# Ensure .env is loaded before accessing environment variables below
+load_dotenv()
 
 router = APIRouter()
 security = HTTPBasic()

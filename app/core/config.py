@@ -2,16 +2,19 @@ from datetime import datetime, timedelta
 from jose import jwt, JWTError
 from fastapi import HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from app.db.mongo import db
 
 import os
 from dotenv import load_dotenv
 
+# Ensure environment variables are loaded before any imports that rely on them
 load_dotenv()
+
+from app.db.mongo import db
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+# Be tolerant if the value is missing or not an int
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 
 bearer_scheme = HTTPBearer()
 
