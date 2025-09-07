@@ -50,3 +50,37 @@ async def search_users(
         )
 
     return result
+
+
+@router.get("/current_user", response_model=UserOut)
+async def current_user(current_user: dict = Depends(get_current_user)):
+    return fix_id(current_user)
+
+@router.get("/users", response_model=List[UserResponse])
+async def get_users():
+    users = await get_all_users_from_db()
+    # Exclude password from response
+    return [UserResponse(**user.dict(exclude={"password"})) for user in users]
+
+
+async def get_all_users_from_db():
+    users_raw = await db["users"].find().to_list(length=100)
+    users = []
+
+    for user in users_raw:
+        users.append(
+            UserResponse(
+                id=str(user["_id"]),
+                first_name=user["first_name"],
+                last_name=user["last_name"],
+                user_name=user["user_name"],
+                email=user["email"],
+                phone_number=user["phone_number"],
+                date_of_birth=user["date_of_birth"],
+                profile_image=user["profile_image"],
+                is_phone_verified=user["is_phone_verified"],
+                is_email_verified=user["is_email_verified"],
+            )
+        )
+
+    return users

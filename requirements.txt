@@ -11,7 +11,8 @@ pymongo==4.14.1
 pytesseract==0.3.10
 pillow==10.4.0
 opencv-python==4.10.0.84
-numpy==1.26.4
+# numpy 1.26.x drops Python 3.8 support; 1.25.x works with 3.8–3.11
+numpy==1.25.2
 httpx==0.27.0
 google-auth==2.31.0
 requests==2.31.0

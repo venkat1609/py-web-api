@@ -17,25 +17,16 @@ class UserResponse(BaseModel):
 
 
 class User(BaseModel):
-    first_name: str
-    last_name: str
-    user_name: str
     email: EmailStr
-    phone_number: str
-    date_of_birth: str
-    profile_image: str
-    is_phone_verified: bool
-    is_email_verified: bool
     password: str
 
 
 class UserBase(BaseModel):
-    user_name: str
     email: EmailStr
 
 class UserOut(UserBase):
     id: str
 
 class LoginRequest(BaseModel):
-    user_name: str
+    email: str
     password: str
