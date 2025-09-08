@@ -125,6 +125,46 @@ async def register(user: User):
     return user
 
 
+@router.post("/resend-verification-email")
+async def resend_verification_email(email: str = Query(...)):
+    user = await collection.find_one({"email": email})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.get("is_email_verified", False):
+        raise HTTPException(status_code=400, detail="Email already verified")
+
+    # Generate a new verification code and update the user record
+    new_code = generate_verification_code()
+    await collection.update_one(
+        {"email": email}, {"$set": {"email_verification_code": new_code}}
+    )
+
+    # Prepare email contents
+    text = f"Your new email verification code is: {new_code}"
+    html = f"""
+    <html>
+      <body>
+        <h2>Email Verification</h2>
+        <p>Your new verification code is:</p>
+        <h3 style=\"color:blue;\">{new_code}</h3>
+      </body>
+    </html>
+    """
+
+    # Send the updated verification code to the user
+    try:
+        send_verification_email(email, html, text)
+    except Exception:
+        # Optional: revert code update on failure to send
+        # Keeping it simple: surface a server error
+        raise HTTPException(
+            status_code=500, detail="Failed to send verification email"
+        )
+
+    return {"message": "Verification code resent"}
+
+
+
 @router.post("/verify-email")
 async def verify_email(email: str = Query(...), code: str = Query(...)):
     user = await collection.find_one({"email": email})
