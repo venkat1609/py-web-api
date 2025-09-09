@@ -1,6 +1,7 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+﻿from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import (
+    payments,
     auth,
     users,
     transactions,
@@ -84,3 +85,8 @@ app.include_router(
 
 app.include_router(friendships.router, prefix="/friendships", tags=["friendships"])
 app.include_router(loans.router, prefix="/loans", tags=["loans"])
+
+
+app.include_router(payments.router, prefix="/payments", tags=["payments"])
+
+

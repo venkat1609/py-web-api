@@ -18,3 +18,4 @@ google-auth==2.31.0
 requests==2.31.0
 apscheduler==3.10.4
 python-dateutil==2.9.0.post0
+stripe==7.10.0
