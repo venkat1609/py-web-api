@@ -22,7 +22,7 @@ from app.scheduler import start_scheduler
 app = FastAPI()
 
 # Allow CORS for your frontend domain
-origins = ["http://localhost:3000", "http://budiee.com", "https://budiee.netlify.app", "https://preview--grow-your-groceries.lovable.app", "https://grow-your-groceries.lovable.app"]  # React dev server
+origins = ["http://localhost:3000", "https://budiee.com", "https://budiee.netlify.app", "https://preview--grow-your-groceries.lovable.app", "https://grow-your-groceries.lovable.app"]  # React dev server
 
 app.add_middleware(
     CORSMiddleware,
