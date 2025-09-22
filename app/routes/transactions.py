@@ -56,10 +56,13 @@ async def update_transaction(
     except:
         raise HTTPException(status_code=400, detail="Invalid transaction ID")
 
-    query = {"_id": txn_object_id, "userId": ObjectId(current_user["_id"])}
+    print(current_user)
+
+    query = {"_id": txn_object_id, "userId": current_user["_id"]}
     update = {"$set": {k: v for k, v in payload.dict().items() if v is not None}}
 
     result = await collection.update_one(query, update)
+    print(result)
 
     if result.modified_count == 0:
         raise HTTPException(

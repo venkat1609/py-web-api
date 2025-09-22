@@ -34,7 +34,6 @@ class TransactionCreate(TransactionBase):
 
 
 class TransactionUpdate(BaseModel):  # Optional so partial updates work
-    userId: Optional[str] = None
     title: Optional[str] = None
     amount: Optional[float] = None
     currency: Optional[str] = None
