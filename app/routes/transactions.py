@@ -26,7 +26,7 @@ async def create_transaction(
 
     now = datetime.utcnow()
     data = tx.dict()
-    data["userId"] = current_user["_id"]
+    data["userId"] = ObjectId(current_user["_id"])
     data["createdAt"] = now
     data["updatedAt"] = now
 

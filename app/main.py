@@ -9,7 +9,7 @@ from app.routes import (
     exchangeRates,
     subscriptions,
     friendships,
-    loans
+    loans,
 )
 from fastapi.responses import JSONResponse
 from datetime import datetime
@@ -22,8 +22,15 @@ from app.scheduler import start_scheduler
 app = FastAPI()
 
 # Allow CORS for your frontend domain
-origins = ["http://localhost:3000", "https://www.budiee.com", "https://budiee.netlify.app", "https://preview--grow-your-groceries.lovable.app", "https://grow-your-groceries.lovable.app"]  # React dev server
+origins = [
+    "http://localhost:3000",
+    "https://www.budiee.com",
+    "https://budiee.netlify.app",
+    "https://preview--grow-your-groceries.lovable.app",
+    "https://grow-your-groceries.lovable.app",
+]
 
+# React dev server
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,  # Or use ["*"] to allow all (not recommended for prod)
@@ -82,11 +89,6 @@ app.include_router(
 app.include_router(
     subscriptions.router, prefix="/subscriptions", tags=["subscriptions"]
 )
-
 app.include_router(friendships.router, prefix="/friendships", tags=["friendships"])
 app.include_router(loans.router, prefix="/loans", tags=["loans"])
-
-
 app.include_router(payments.router, prefix="/payments", tags=["payments"])
-
-
