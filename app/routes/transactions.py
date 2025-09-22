@@ -67,7 +67,8 @@ async def update_transaction(
         )
 
     updated = await collection.find_one({"_id": txn_object_id})
-    return fix_id(updated)
+    results = [fix_id(doc) async for doc in updated]
+    return fix_id(results)
 
 
 @router.delete("/{txn_id}")
