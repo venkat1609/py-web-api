@@ -16,6 +16,16 @@ from app.utils.enums import TransactionStatus
 router = APIRouter()
 collection = db["transactions"]
 
+@router.get("")
+async def list_transactions(current_user: str = Depends(get_current_user)):
+    cursor = collection.find().sort("date", -1)
+
+    results = []
+    async for doc in cursor:
+        results.append(fix_id(doc))
+    return results
+
+
 
 @router.post(
     "/", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED
@@ -34,15 +44,6 @@ async def create_transaction(
     created = await collection.find_one({"_id": result.inserted_id})
     return fix_id(created)
 
-
-@router.get("/")
-async def list_transactions(current_user: str = Depends(get_current_user)):
-    cursor = collection.find().sort("date", -1)
-
-    results = []
-    async for doc in cursor:
-        results.append(fix_id(doc))
-    return results
 
 
 @router.put("/{txn_id}")
@@ -91,9 +92,9 @@ async def delete_transaction(
     return {"message": "Transaction deleted successfully"}
 
 
-@router.get("/getTransactionById/{tx_id}")
-async def get_transaction(tx_id: str, current_user: str = Depends(get_current_user)):
-    doc = await collection.find_one({"_id": ObjectId(tx_id)})
+@router.get("/{txn_id}")
+async def get_transaction(txn_id: str, current_user: str = Depends(get_current_user)):
+    doc = await collection.find_one({"_id": ObjectId(txn_id)})
     if not doc:
         raise HTTPException(status_code=404, detail="Transaction not found")
     return fix_id(doc)
@@ -119,7 +120,7 @@ async def filter_transactions(
     return results
 
 
-@router.get("/expense-summary-by-category")
+@router.post("/expense_summary_by_category")
 async def get_expense_summary_by_category(
     current_user: dict = Depends(get_current_user),
 ):
@@ -136,7 +137,11 @@ async def get_expense_summary_by_category(
 
     # 2. Get all user's expense transactions
     transactions_cursor = collection.find(
-        {"type": "expense", "status":  TransactionStatus.completed, "userId": ObjectId(current_user["_id"])}
+        {
+            "type": "expense",
+            "status": TransactionStatus.completed,
+            "userId": ObjectId(current_user["_id"]),
+        }
     )
 
     category_summary = {}
@@ -167,7 +172,7 @@ async def get_expense_summary_by_category(
     return result
 
 
-@router.post("/overall-expense")
+@router.post("/overall_expense")
 async def get_overall_expense(
     filters: dict = Body(default={}),
     current_user: dict = Depends(get_current_user),
@@ -227,7 +232,7 @@ async def get_overall_expense(
     return category_summary
 
 
-@router.post("/balance-summary")
+@router.post("/balance_summary")
 async def get_balance_summary(
     filters: dict = Body(default={}),
     current_user: dict = Depends(get_current_user),

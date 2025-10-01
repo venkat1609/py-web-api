@@ -5,7 +5,7 @@ from datetime import datetime
 from app.routes.auth import get_current_user
 
 router = APIRouter()
-collection = db["friendships"]
+collection = db["connections"]
 users = db["users"]
 
 
@@ -16,10 +16,43 @@ def to_object_id(id_str: str):
         raise HTTPException(status_code=400, detail=f"Invalid ObjectId: {id_str}")
 
 
+
+# ----------------------
+# Get Friends List
+# ----------------------
+@router.get("")
+async def get_friends(current_user: dict = Depends(get_current_user)):
+    user_oid = current_user["_id"]
+
+    cursor = collection.find(
+        {
+            "$or": [{"requesterId": user_oid}, {"recipientId": user_oid}],
+            "status": "accepted",
+        }
+    )
+
+    friends = []
+    async for doc in cursor:
+        friend_oid = (
+            doc["recipientId"] if doc["requesterId"] == user_oid else doc["requesterId"]
+        )
+        user = await users.find_one({"_id": friend_oid})
+        if user:
+            friends.append(
+                {
+                    "userId": str(user["_id"]),
+                    "user_name": user.get("user_name"),
+                    "first_name": user.get("first_name"),
+                    "last_name": user.get("last_name"),
+                    "email": user.get("email"),
+                }
+            )
+    return friends
+
 # ----------------------
 # Send Friend Request
 # ----------------------
-@router.post("/send")
+@router.post("/send_request")
 async def send_friend_request(
     recipient_id: str, current_user: dict = Depends(get_current_user)
 ):
@@ -55,7 +88,7 @@ async def send_friend_request(
 # ----------------------
 # Accept Friend Request
 # ----------------------
-@router.post("/accept")
+@router.post("/accept_request")
 async def accept_friend_request(
     requester_id: str, current_user: dict = Depends(get_current_user)
 ):
@@ -78,7 +111,7 @@ async def accept_friend_request(
 # ----------------------
 # Reject Friend Request
 # ----------------------
-@router.post("/reject")
+@router.post("/reject_request")
 async def reject_friend_request(
     requester_id: str, current_user: dict = Depends(get_current_user)
 ):
@@ -99,7 +132,7 @@ async def reject_friend_request(
 # ----------------------
 # Remove Friend
 # ----------------------
-@router.delete("/remove")
+@router.delete("/remove_request")
 async def remove_friend(friend_id: str, current_user: dict = Depends(get_current_user)):
     user_oid = current_user["_id"]
     friend_oid = to_object_id(friend_id)
@@ -125,43 +158,11 @@ async def remove_friend(friend_id: str, current_user: dict = Depends(get_current
     return {"message": "Friend removed."}
 
 
-# ----------------------
-# Get Friends List
-# ----------------------
-@router.get("/list")
-async def get_friends(current_user: dict = Depends(get_current_user)):
-    user_oid = current_user["_id"]
-
-    cursor = collection.find(
-        {
-            "$or": [{"requesterId": user_oid}, {"recipientId": user_oid}],
-            "status": "accepted",
-        }
-    )
-
-    friends = []
-    async for doc in cursor:
-        friend_oid = (
-            doc["recipientId"] if doc["requesterId"] == user_oid else doc["requesterId"]
-        )
-        user = await users.find_one({"_id": friend_oid})
-        if user:
-            friends.append(
-                {
-                    "userId": str(user["_id"]),
-                    "user_name": user.get("user_name"),
-                    "first_name": user.get("first_name"),
-                    "last_name": user.get("last_name"),
-                    "email": user.get("email"),
-                }
-            )
-    return friends
-
 
 # ----------------------
 # Get Pending Requests
 # ----------------------
-@router.get("/pending")
+@router.get("/pending_request")
 async def get_pending_requests(current_user: dict = Depends(get_current_user)):
     user_oid = current_user["_id"]
 
@@ -189,3 +190,4 @@ async def get_pending_requests(current_user: dict = Depends(get_current_user)):
                 }
             )
     return requests
+

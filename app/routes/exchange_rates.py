@@ -5,7 +5,7 @@ from app.utils.helpers import fix_id
 router = APIRouter()
 collection = db["exchange_rates"]
 
-@router.get("/")
+@router.get("")
 async def get_exchange_rates():
     cursor = collection.find().sort("date", -1)
 

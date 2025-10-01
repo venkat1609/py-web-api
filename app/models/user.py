@@ -9,7 +9,7 @@ class UserResponse(BaseModel):
     last_name: str
     user_name: str
     email: EmailStr
-    phone_number: str
+    phone: str
     date_of_birth: str
     profile_image: str
     is_phone_verified: bool

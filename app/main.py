@@ -6,10 +6,11 @@ from app.routes import (
     users,
     transactions,
     categories,
-    exchangeRates,
+    exchange_rates,
     subscriptions,
-    friendships,
+    connections,
     loans,
+    utils
 )
 from fastapi.responses import JSONResponse
 from datetime import datetime
@@ -58,25 +59,6 @@ async def health_check():
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 
-@app.post("/extract-receipt")
-async def extract_receipt(image: UploadFile = File(...)):
-    if image.content_type not in ["image/jpeg", "image/png"]:
-        raise HTTPException(
-            status_code=400, detail="Only JPEG and PNG files are supported."
-        )
-
-    # Read image from upload
-    image_bytes = await image.read()
-    img = Image.open(io.BytesIO(image_bytes))
-
-    # Extract text with pytesseract
-    try:
-        text = pytesseract.image_to_string(img)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-    return JSONResponse(content={"raw_text": text})
-
 
 # Include the authentication router
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
@@ -84,11 +66,12 @@ app.include_router(users.router, prefix="/users", tags=["users"])
 app.include_router(transactions.router, prefix="/transactions", tags=["transactions"])
 app.include_router(categories.router, prefix="/categories", tags=["categories"])
 app.include_router(
-    exchangeRates.router, prefix="/exchangeRates", tags=["exchangeRates"]
+    exchange_rates.router, prefix="/exchange_rates", tags=["exchange_rates"]
 )
 app.include_router(
     subscriptions.router, prefix="/subscriptions", tags=["subscriptions"]
 )
-app.include_router(friendships.router, prefix="/friendships", tags=["friendships"])
+app.include_router(connections.router, prefix="/connections", tags=["connections"])
 app.include_router(loans.router, prefix="/loans", tags=["loans"])
 app.include_router(payments.router, prefix="/payments", tags=["payments"])
+app.include_router(utils.router, prefix="/utils", tags=["utils"])

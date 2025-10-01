@@ -17,7 +17,7 @@ class CheckoutSessionRequest(BaseModel):
     mode: str  # "subscription" for subscriptions
 
 
-@router.post("/create-checkout-session")
+@router.post("/create_checkout_session")
 async def create_checkout_session(
     session_req: CheckoutSessionRequest,
     current_user: dict = Depends(get_current_user),
@@ -70,7 +70,7 @@ class CheckoutSessionRetrieve(BaseModel):
         allow_population_by_field_name = True
 
 
-@router.post("/checkout-success")
+@router.post("/checkout_success")
 async def checkout_success(
     payload: CheckoutSessionRetrieve = Body(...),
     current_user: dict = Depends(get_current_user),

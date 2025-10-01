@@ -12,7 +12,7 @@ from app.core.jwt import create_access_token, get_current_user
 from app.db.mongo import db
 from app.utils.helpers import fix_id  # assuming you use the helper
 from typing import Union, List
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 import httpx
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
@@ -125,9 +125,12 @@ async def register(user: User):
     return user
 
 
-@router.post("/resend-verification-email")
-async def resend_verification_email(email: str = Query(...)):
-    user = await collection.find_one({"email": email})
+class ResendReq(BaseModel):
+    email: EmailStr
+    
+@router.post("/resend_verification_code")
+async def resend_verification_code(req: ResendReq):
+    user = await collection.find_one({"email": req.email})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     if user.get("is_email_verified", False):
@@ -136,7 +139,7 @@ async def resend_verification_email(email: str = Query(...)):
     # Generate a new verification code and update the user record
     new_code = generate_verification_code()
     await collection.update_one(
-        {"email": email}, {"$set": {"email_verification_code": new_code}}
+        {"email": req.email}, {"$set": {"email_verification_code": new_code}}
     )
 
     # Prepare email contents
@@ -153,7 +156,7 @@ async def resend_verification_email(email: str = Query(...)):
 
     # Send the updated verification code to the user
     try:
-        send_verification_email(email, html, text)
+        send_verification_email(req.email, html, text)
     except Exception:
         # Optional: revert code update on failure to send
         # Keeping it simple: surface a server error
@@ -164,19 +167,22 @@ async def resend_verification_email(email: str = Query(...)):
     return {"message": "Verification code resent"}
 
 
+class VerifyReq(BaseModel):
+    email: EmailStr
+    code: str
 
-@router.post("/verify-email")
-async def verify_email(email: str = Query(...), code: str = Query(...)):
-    user = await collection.find_one({"email": email})
+@router.post("/verify_email")
+async def verify_email(req: VerifyReq):
+    user = await collection.find_one({"email": req.email})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     if user.get("is_email_verified", False):
         raise HTTPException(status_code=400, detail="Email already verified")
-    if user["email_verification_code"] != code:
+    if user["email_verification_code"] != req.code:
         raise HTTPException(status_code=400, detail="Invalid verification code")
 
     await collection.update_one(
-        {"email": email},
+        {"email": req.email},
         {"$set": {"is_email_verified": True, "email_verification_code": ""}},
     )
 
@@ -187,7 +193,7 @@ async def verify_email(email: str = Query(...), code: str = Query(...)):
         "last_name": user.get("last_name", ""),
         "user_name": user.get("user_name", ""),
         "email": user["email"],
-        "phone_number": user.get("phone_number", ""),
+        "phone": user.get("phone", ""),
         "date_of_birth": user.get("date_of_birth", ""),
         "profile_image": user.get("profile_image", ""),
         "is_phone_verified": user.get("is_phone_verified", False),
@@ -212,7 +218,7 @@ async def login(credentials: LoginRequest):
         "last_name": user.get("last_name", ""),
         "user_name": user.get("user_name", ""),
         "email": user["email"],
-        "phone_number": user.get("phone_number", ""),
+        "phone": user.get("phone", ""),
         "date_of_birth": user.get("date_of_birth", ""),
         "profile_image": user.get("profile_image", ""),
         "is_phone_verified": user.get("is_phone_verified", False),
@@ -245,7 +251,7 @@ async def google_login_token(payload: TokenPayload):
             "last_name": user["last_name"],
             "user_name": user["user_name"],
             "email": user["email"],
-            "phone_number": user["phone_number"],
+            "phone": user["phone"],
             "date_of_birth": user["date_of_birth"],
             "profile_image": user["profile_image"],
             "is_phone_verified": user["is_phone_verified"],

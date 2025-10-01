@@ -7,7 +7,6 @@ from app.tasks.queue_upcoming_subscriptions import queue_upcoming_subscriptions
 
 scheduler = AsyncIOScheduler()
 
-
 def start_scheduler():
     scheduler.start()
     asyncio.create_task(fetch_and_store_rates())  # run immediately

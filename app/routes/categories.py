@@ -11,7 +11,7 @@ router = APIRouter()
 collection = db["categories"]
 
 
-@router.get("/")
+@router.get("")
 async def list_categories(current_user: str = Depends(get_current_user)):
     cursor = collection.find()
 

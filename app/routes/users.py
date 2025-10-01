@@ -17,6 +17,35 @@ security = HTTPBasic()
 bearer_scheme = HTTPBearer()
 collection = db["users"]
 
+@router.get("", response_model=List[UserResponse])
+async def get_users():
+    users = await get_all_users_from_db()
+    # Exclude password from response
+    return [UserResponse(**user.dict(exclude={"password"})) for user in users]
+
+
+async def get_all_users_from_db():
+    users_raw = await db["users"].find().to_list(length=100)
+    users = []
+
+    for user in users_raw:
+        users.append(
+            UserResponse(
+                id=str(user["_id"]),
+                first_name=user["first_name"],
+                last_name=user["last_name"],
+                user_name=user["user_name"],
+                email=user["email"],
+                phone=user["phone"],
+                date_of_birth=user["date_of_birth"],
+                profile_image=user["profile_image"],
+                is_phone_verified=user["is_phone_verified"],
+                is_email_verified=user["is_email_verified"],
+            )
+        )
+
+    return users
+
 
 @router.get("/search", response_model=List[UserResponse])
 async def search_users(
@@ -41,7 +70,7 @@ async def search_users(
                 email=user.get("email", ""),
                 first_name=user.get("first_name", ""),
                 last_name=user.get("last_name", ""),
-                phone_number=user.get("phone_number", ""),
+                phone=user.get("phone", ""),
                 date_of_birth=user.get("date_of_birth", ""),
                 is_email_verified=user.get("is_email_verified", False),
                 is_phone_verified=user.get("is_phone_verified", False),
@@ -56,31 +85,3 @@ async def search_users(
 async def current_user(current_user: dict = Depends(get_current_user)):
     return fix_id(current_user)
 
-@router.get("/users", response_model=List[UserResponse])
-async def get_users():
-    users = await get_all_users_from_db()
-    # Exclude password from response
-    return [UserResponse(**user.dict(exclude={"password"})) for user in users]
-
-
-async def get_all_users_from_db():
-    users_raw = await db["users"].find().to_list(length=100)
-    users = []
-
-    for user in users_raw:
-        users.append(
-            UserResponse(
-                id=str(user["_id"]),
-                first_name=user["first_name"],
-                last_name=user["last_name"],
-                user_name=user["user_name"],
-                email=user["email"],
-                phone_number=user["phone_number"],
-                date_of_birth=user["date_of_birth"],
-                profile_image=user["profile_image"],
-                is_phone_verified=user["is_phone_verified"],
-                is_email_verified=user["is_email_verified"],
-            )
-        )
-
-    return users

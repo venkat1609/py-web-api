@@ -16,6 +16,18 @@ router = APIRouter()
 collection = db["subscriptions"]
 
 
+
+@router.get("")
+async def list_subscriptions(current_user: str = Depends(get_current_user)):
+    cursor = collection.find().sort("date", -1)
+
+    results = []
+    async for doc in cursor:
+        results.append(fix_id(doc))
+    return results
+
+
+
 @router.post(
     "/", response_model=SubscriptionResponse, status_code=status.HTTP_201_CREATED
 )
@@ -33,15 +45,6 @@ async def create_subscription(
     created = await collection.find_one({"_id": result.inserted_id})
     return fix_id(created)
 
-
-@router.get("/")
-async def list_subscriptions(current_user: str = Depends(get_current_user)):
-    cursor = collection.find().sort("date", -1)
-
-    results = []
-    async for doc in cursor:
-        results.append(fix_id(doc))
-    return results
 
 
 @router.put("/{sub_id}")
@@ -87,7 +90,7 @@ async def delete_subscription(
     return {"message": "Subscription deleted successfully"}
 
 
-@router.get("/getSubscriptionById/{sub_id}")
+@router.get("/{sub_id}")
 async def get_subscription(sub_id: str, current_user: str = Depends(get_current_user)):
     doc = await collection.find_one({"_id": ObjectId(sub_id)})
     if not doc:
